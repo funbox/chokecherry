@@ -16,6 +16,7 @@
 
 ```
 это эвивалентно:
+
 ```
    {chokecherry, [
        {info, [{mps_limit, 50}]}
