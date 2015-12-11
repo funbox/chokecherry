@@ -1,0 +1,13 @@
+{application, chokecherry,
+ [
+  {description, "lager wrapper"},
+  {vsn, "0.1"},
+  {registered, [chokecherry_sup, shaper_info, shaper_warning]},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  lager
+                 ]},
+  {mod, { chokecherry_app, []}},
+  {env, [{info, [{mps_limit, 50}]}]}
+ ]}.
