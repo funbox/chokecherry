@@ -24,7 +24,6 @@ start_link() ->
 
 init([]) ->
     {ok, { {one_for_one, 10000, 1}, [
-        ?CHILD(shaper_info, worker),
-        ?CHILD(shaper_warning, worker)
+        ?CHILD(chokecherry_shaper, worker),
+        ?CHILD(chokecherry_writer, worker)
     ]} }.
-

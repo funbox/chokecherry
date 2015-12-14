@@ -2,7 +2,7 @@
 
 -export([start/0, stop/0]).
 
--export([info/2, warning/2]).
+-export([info/1, info/2]).
 
 start() ->
     application:start(chokecherry, permanent).
@@ -10,8 +10,8 @@ start() ->
 stop() ->
     application:stop(chokecherry).
 
-info(StringFormat, Args) ->
-    shaper_info:handle(StringFormat, Args).
+info(StringFormat) ->
+    info(StringFormat, []).
 
-warning(StringFormat, Args) ->
-    shaper_warning:handle(StringFormat, Args).
+info(StringFormat, Args) ->
+    chokecherry_shaper:put(StringFormat, Args).
