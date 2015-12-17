@@ -74,13 +74,21 @@ handle_call({put, StringFormat, Args}, _From, State = #state{log_queue=LogQueue,
     send_new_data(State3),
     {reply, ok, State3, ?TIMEOUT};
 handle_call({get, LastLogId}, _From, State = #state{sys_queue=SysQueue, sys_queue_len=SysQueueLen,
+    log_queue_len=LogQueueLen, buffer=Buffer}) when SysQueueLen > 0 andalso Buffer =:= undefined ->
+    {{value, Log}, SysQueue2} = queue:out(SysQueue),
+    SysQueueLen2 = SysQueueLen - 1,
+    Reply = {LogQueueLen + SysQueueLen2, Log},
+    State2 = State#state{sys_queue=SysQueue2, sys_queue_len=SysQueueLen2, buffer=Log},
+    State3 = handle_dropped(State2),
+    {reply, Reply, State3, ?TIMEOUT};
+handle_call({get, LastLogId}, _From, State = #state{sys_queue=SysQueue, sys_queue_len=SysQueueLen,
     log_queue_len=LogQueueLen, buffer=Buffer}) when SysQueueLen > 0 ->
     {BufferLogId, _, _} = Buffer,
     {Reply, State2} = case LastLogId =:= BufferLogId of
         true -> 
             {{value, Log}, SysQueue2} = queue:out(SysQueue),
             SysQueueLen2 = SysQueueLen - 1,
-            {{LogQueueLen + SysQueueLen, Log}, State#state{sys_queue=SysQueue2, sys_queue_len=SysQueueLen2, buffer=Log}};
+            {{LogQueueLen + SysQueueLen2, Log}, State#state{sys_queue=SysQueue2, sys_queue_len=SysQueueLen2, buffer=Log}};
         false ->
             {{LogQueueLen + SysQueueLen, Buffer}, State}
     end,
