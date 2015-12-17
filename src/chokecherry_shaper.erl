@@ -73,7 +73,7 @@ handle_call({put, StringFormat, Args}, _From, State = #state{log_queue=LogQueue,
     State3 = handle_dropped(State2),
     send_new_data(State3),
     {reply, ok, State3, ?TIMEOUT};
-handle_call({get, LastLogId}, _From, State = #state{sys_queue=SysQueue, sys_queue_len=SysQueueLen,
+handle_call({get, _LastLogId}, _From, State = #state{sys_queue=SysQueue, sys_queue_len=SysQueueLen,
     log_queue_len=LogQueueLen, buffer=Buffer}) when SysQueueLen > 0 andalso Buffer =:= undefined ->
     {{value, Log}, SysQueue2} = queue:out(SysQueue),
     SysQueueLen2 = SysQueueLen - 1,
