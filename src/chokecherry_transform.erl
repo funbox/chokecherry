@@ -3,21 +3,19 @@
 -export([parse_transform/2]).
 
 parse_transform(Forms, _Options) ->
-    Forms2 = [add_calling_info(E) || E <- Forms],
-    Forms2.
+    [add_calling_info(E) || E <- Forms].
 
-add_calling_info({attribute,_Line,module,Module} = Match) ->
+add_calling_info({attribute, _Line, module, Module} = Match) ->
     put(module,Module),
     Match;
 add_calling_info({function, Line, FunName, Arrity, Clauses}) ->
     put(function, FunName),
     Clauses2 = [transform_clause(C) || C <- Clauses],
     {function, Line, FunName, Arrity, Clauses2};
-add_calling_info(Match) ->
-    Match.
+add_calling_info(Match) -> Match.
 
 transform_clause({clause, Line, Args, Opts, Body}) ->
-    Body2 = [transform_statement(St) || St <- Body],
+    Body2 = [transform_statement(S) || S <- Body],
     {clause, Line, Args, Opts, Body2};
 transform_clause(C) -> C.
 
