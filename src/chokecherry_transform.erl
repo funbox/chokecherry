@@ -19,10 +19,11 @@ transform_clause({clause, Line, Args, Opts, Body}) ->
     {clause, Line, Args, Opts, Body2};
 transform_clause(C) -> C.
 
-transform_statement({call, Line1, {remote, Line2, {atom, Line3, chokecherry}, {atom, Line4, info}}, Args}) ->
+transform_statement({call, Line1, {remote, Line2, {atom, Line3, chokecherry}, {atom, Line4, Level}}, Args}) 
+    when Level == info orelse Level == warning orelse Level == error ->
     Module = get(module),
     Args2 = [{atom, Line4, Module} | Args],
-    {call, Line1, {remote, Line2, {atom, Line3, chokecherry}, {atom, Line4, info}}, Args2};
+    {call, Line1, {remote, Line2, {atom, Line3, chokecherry}, {atom, Line4, Level}}, Args2};
 transform_statement(Stmt) when is_tuple(Stmt) ->
     list_to_tuple(transform_statement(tuple_to_list(Stmt)));
 transform_statement(Stmt) when is_list(Stmt) ->
