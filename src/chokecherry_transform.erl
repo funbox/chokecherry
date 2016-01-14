@@ -19,7 +19,7 @@ transform_clause({clause, Line, Args, Opts, Body}) ->
     {clause, Line, Args, Opts, Body2};
 transform_clause(C) -> C.
 
-transform_statement({call, Line1, {remote, Line2, {atom, Line3, chokecherry}, {atom, Line4, Level}}, Args}) 
+transform_statement({call, Line1, {remote, Line2, {atom, Line3, chokecherry}, {atom, Line4, Level}}, Args})
     when Level == info orelse Level == warning orelse Level == error ->
     Module = get(module),
     Args2 = [{atom, Line4, Module} | Args],
