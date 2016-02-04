@@ -44,8 +44,8 @@ handle_cast(loop, State = #state{log_id=PreviosLogId}) ->
     LogId2 = case ?SHAPER:get(PreviosLogId) of
         undefined -> 
             PreviosLogId;
-        {Len, {LogId, StringFormat, Args}} -> 
-            lager:info(StringFormat, Args),
+        {Len, {LogId, StringFormat, Args, Metadata}} -> 
+            lager:log(info, Metadata, StringFormat, Args),
             if Len > 0 -> gen_server:cast(self(), loop);
                 true -> ok
             end,

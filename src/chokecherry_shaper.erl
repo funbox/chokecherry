@@ -10,7 +10,7 @@
 
 -record(state, {sys_queue :: queue:queue(),
     sys_queue_len :: integer(),
-    log_queue :: queue:queue(), 
+    log_queue :: queue:queue(),
     log_queue_len :: integer(),
     buffer :: {integer(), list(), list()},
     log_id :: integer(),
@@ -25,7 +25,7 @@
 
 -export([start_link/0]).
 
--export([get/1, put/2]).
+-export([get/1, put/3]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -41,11 +41,15 @@
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-get(LogId) -> 
+get(LogId) ->
     gen_server:call(?SERVER, {get, LogId}).
 
-put(StringFormat, Args) ->
-    gen_server:call(?SERVER, {put, StringFormat, Args}).
+put(StringFormat, Args, Metadata) ->
+    try
+        gen_server:call(?SERVER, {put, StringFormat, Args, Metadata})
+    catch
+        exit:{noproc, _} -> {error, chokecherry_not_started}
+    end.
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -53,21 +57,21 @@ put(StringFormat, Args) ->
 
 init(_Args) ->
     State = #state{sys_queue=queue:new(), sys_queue_len=0, log_queue=queue:new(), log_queue_len=0, buffer=undefined,
-        log_id=0, max_log_id=?LOG_QUEUE_CAPACITY+?SYS_QUEUE_CAPACITY-1, dropped=0, last_time=os:timestamp()}, 
+        log_id=0, max_log_id=?LOG_QUEUE_CAPACITY+?SYS_QUEUE_CAPACITY-1, dropped=0, last_time=os:timestamp()},
     {ok, State}.
 
-handle_call({put, StringFormat, Args}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen,
+handle_call({put, StringFormat, Args, Metadata}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen,
     log_id=LogId}) when LogQueueLen < ?LOG_QUEUE_CAPACITY ->
-    LogQueue2 = queue:in({LogId, StringFormat, Args}, LogQueue),
+    LogQueue2 = queue:in({LogId, StringFormat, Args, Metadata}, LogQueue),
     LogQueueLen2 = LogQueueLen + 1,
     LogId2 = get_next_log_id(State),
     State2 = State#state{log_queue=LogQueue2, log_queue_len=LogQueueLen2, log_id=LogId2},
     State3 = handle_dropped(State2),
     send_new_data(State3),
     {reply, ok, State3, ?TIMEOUT};
-handle_call({put, StringFormat, Args}, _From, State = #state{log_queue=LogQueue, log_id=LogId, dropped=Dropped}) ->
+handle_call({put, StringFormat, Args, Metadata}, _From, State = #state{log_queue=LogQueue, log_id=LogId, dropped=Dropped}) ->
     {{value, _}, LogQueue2} = queue:out(LogQueue),
-    LogQueue3 = queue:in({LogId, StringFormat, Args}, LogQueue2),
+    LogQueue3 = queue:in({LogId, StringFormat, Args, Metadata}, LogQueue2),
     LogId2 = get_next_log_id(State),
     State2 = State#state{log_queue=LogQueue3, dropped=Dropped+1, log_id=LogId2},
     State3 = handle_dropped(State2),
@@ -85,7 +89,7 @@ handle_call({get, LastLogId}, _From, State = #state{sys_queue=SysQueue, sys_queu
     log_queue_len=LogQueueLen, buffer=Buffer}) when SysQueueLen > 0 ->
     {BufferLogId, _, _} = Buffer,
     {Reply, State2} = case LastLogId =:= BufferLogId of
-        true -> 
+        true ->
             {{value, Log}, SysQueue2} = queue:out(SysQueue),
             SysQueueLen2 = SysQueueLen - 1,
             {{LogQueueLen + SysQueueLen2, Log}, State#state{sys_queue=SysQueue2, sys_queue_len=SysQueueLen2, buffer=Log}};
@@ -103,9 +107,9 @@ handle_call({get, _LastLogId}, _From, State = #state{log_queue=LogQueue, log_que
     {reply, {LogQueueLen2, Log}, State3, ?TIMEOUT};
 handle_call({get, LastLogId}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen, buffer=Buffer})
     when LogQueueLen > 0 ->
-    {BufferLogId, _, _} = Buffer,
+    {BufferLogId, _, _, _} = Buffer,
     {Reply, State2} = case LastLogId =:= BufferLogId of
-        true -> 
+        true ->
             {{value, Log}, LogQueue2} = queue:out(LogQueue),
             LogQueueLen2 = LogQueueLen - 1,
             {{LogQueueLen2, Log}, State#state{log_queue=LogQueue2, log_queue_len=LogQueueLen2, buffer=Log}};
@@ -152,11 +156,11 @@ handle_dropped(State = #state{sys_queue=SysQueue, sys_queue_len=SysQueueLen, log
         {M, S, _} ->
             State#state{dropped=Dropped, last_time=Now};
         _ ->
-            SysStringFormat = "chokecherry dropped ~p messages in the last second", 
+            SysStringFormat = "chokecherry dropped ~p messages in the last second",
             {SysQueue3, SysQueueLen3} = case SysQueueLen < ?SYS_QUEUE_CAPACITY of
-                true -> 
+                true ->
                     {queue:in({LogId, SysStringFormat, [Dropped]}, SysQueue), SysQueueLen + 1};
-                false -> 
+                false ->
                     {{value, {_Id, _FormatString, [D]}}, SysQueue2} = queue:out(SysQueue),
                     {queue:in({LogId, SysStringFormat, [Dropped + D]}, SysQueue2), SysQueueLen}
             end,
