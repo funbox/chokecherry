@@ -87,7 +87,7 @@ handle_call({get, _LastLogId}, _From, State = #state{sys_queue=SysQueue, sys_que
     {reply, Reply, State3, ?TIMEOUT};
 handle_call({get, LastLogId}, _From, State = #state{sys_queue=SysQueue, sys_queue_len=SysQueueLen,
     log_queue_len=LogQueueLen, buffer=Buffer}) when SysQueueLen > 0 ->
-    {BufferLogId, _, _} = Buffer,
+    {BufferLogId, _, _, _} = Buffer,
     {Reply, State2} = case LastLogId =:= BufferLogId of
         true ->
             {{value, Log}, SysQueue2} = queue:out(SysQueue),
