@@ -1,8 +1,9 @@
 -module(chokecherry_writer).
 -behaviour(gen_server).
--define(SERVER, ?MODULE).
 
--define(TIMEOUT, 200).
+-include("chokecherry.hrl").
+
+-define(SERVER, ?MODULE).
 -define(SHAPER, chokecherry_shaper).
 
 -compile([{parse_transform, lager_transform}]).
@@ -42,9 +43,9 @@ handle_call(_Request, _From, State) ->
 
 handle_cast(loop, State = #state{log_id=PreviosLogId}) ->
     LogId2 = case ?SHAPER:get(PreviosLogId) of
-        undefined -> 
+        undefined ->
             PreviosLogId;
-        {Len, {LogId, StringFormat, Args, Metadata}} -> 
+        {Len, {LogId, StringFormat, Args, Metadata}} ->
             lager:log(info, Metadata, StringFormat, Args),
             if Len > 0 -> gen_server:cast(self(), loop);
                 true -> ok
@@ -52,7 +53,7 @@ handle_cast(loop, State = #state{log_id=PreviosLogId}) ->
             LogId
     end,
     State2 = State#state{log_id=LogId2},
-    {noreply, State2, ?TIMEOUT};
+    {noreply, State2, config(timeout, ?WRITER_TIMEOUT)};
 handle_cast(new_data, State) ->
     flush_new_data(),
     gen_server:cast(self(), loop),
@@ -82,3 +83,7 @@ flush_new_data() ->
     after 0 ->
         ok
     end.
+
+config(Key, Default) ->
+    Config = application:get_env(chokecherry, writer, []),
+    proplists:get_value(Key, Config, Default).

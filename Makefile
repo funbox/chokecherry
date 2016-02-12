@@ -1,3 +1,5 @@
+.PHONY: all deps compile compile_without_reba run test clean
+
 REBAR=./rebar
 
 all: deps compile
@@ -15,4 +17,7 @@ clean:
 	rm -rf ebin/* log deps
 
 run:
-	erl -pa ./ebin -pa deps/*/ebin -boot start_sasl -s lager -s chokecherry
+	erl -pa ./ebin -pa deps/*/ebin -boot start_sasl -config sys.config -s sync -s lager -s chokecherry
+
+test:
+	@$(REBAR) eunit skip_deps=true
