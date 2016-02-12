@@ -63,20 +63,19 @@ init(_Args) ->
                 last_time = os:timestamp()},
     {ok, State}.
 
-handle_call({put, StringFormat, Args, Metadata}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen,
-    log_id=LogId}) when LogQueueLen < log_queue_capacity() ->
-    LogQueue2 = queue:in({LogId, StringFormat, Args, Metadata}, LogQueue),
-    LogQueueLen2 = LogQueueLen + 1,
-    LogId2 = get_next_log_id(State),
-    State2 = State#state{log_queue=LogQueue2, log_queue_len=LogQueueLen2, log_id=LogId2},
-    State3 = handle_dropped(State2),
-    send_new_data(State3),
-    {reply, ok, State3, timeout()};
-handle_call({put, StringFormat, Args, Metadata}, _From, State = #state{log_queue=LogQueue, log_id=LogId, dropped=Dropped}) ->
-    {{value, _}, LogQueue2} = queue:out(LogQueue),
-    LogQueue3 = queue:in({LogId, StringFormat, Args, Metadata}, LogQueue2),
-    LogId2 = get_next_log_id(State),
-    State2 = State#state{log_queue=LogQueue3, dropped=Dropped+1, log_id=LogId2},
+handle_call({put, StringFormat, Args, Metadata}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen, log_id=LogId, dropped=Dropped}) ->
+    State2 = case LogQueueLen < log_queue_capacity() of
+        true ->
+            LogQueue2 = queue:in({LogId, StringFormat, Args, Metadata}, LogQueue),
+            LogQueueLen2 = LogQueueLen + 1,
+            LogId2 = get_next_log_id(State),
+            State#state{log_queue=LogQueue2, log_queue_len=LogQueueLen2, log_id=LogId2};
+        false ->
+            {{value, _}, LogQueue2} = queue:out(LogQueue),
+            LogQueue3 = queue:in({LogId, StringFormat, Args, Metadata}, LogQueue2),
+            LogId2 = get_next_log_id(State),
+            State#state{log_queue=LogQueue3, dropped=Dropped+1, log_id=LogId2}
+    end,
     State3 = handle_dropped(State2),
     send_new_data(State3),
     {reply, ok, State3, timeout()};
@@ -137,7 +136,7 @@ handle_dropped(State = #state{dropped=Dropped, last_time=LastTime}) when Dropped
         {M, S, _} ->
             State#state{dropped=Dropped, last_time=Now};
         _ ->
-            lager:error("chokecherry dropped ~p messages in the last second", [Dropped]),
+            chokecherry:error("chokecherry dropped ~p messages in the last second", [Dropped]),
             State#state{dropped=0, last_time=Now}
     end;
 handle_dropped(State) -> State#state{last_time=os:timestamp()}.
