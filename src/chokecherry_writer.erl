@@ -8,7 +8,7 @@
 
 -compile([{parse_transform, lager_transform}]).
 
--record(state, {log_id :: integer()}).
+-record(state, {log_id :: integer(), timeout :: integer()}).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -36,12 +36,12 @@ start_link() ->
 
 init(_Args) ->
     gen_server:cast(self(), loop),
-    {ok, #state{}}.
+    {ok, #state{timeout = config(timeout, ?WRITER_TIMEOUT)}}.
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
-handle_cast(loop, State = #state{log_id=PreviosLogId}) ->
+handle_cast(loop, State = #state{log_id=PreviosLogId, timeout = Timeout}) ->
     LogId2 = case ?SHAPER:get(PreviosLogId) of
         undefined ->
             PreviosLogId;
@@ -53,7 +53,7 @@ handle_cast(loop, State = #state{log_id=PreviosLogId}) ->
             LogId
     end,
     State2 = State#state{log_id=LogId2},
-    {noreply, State2, config(timeout, ?WRITER_TIMEOUT)};
+    {noreply, State2, Timeout};
 handle_cast(new_data, State) ->
     flush_new_data(),
     gen_server:cast(self(), loop),

@@ -13,7 +13,9 @@
     log_id :: integer(),
     max_log_id :: integer(),
     dropped :: integer(),
-    last_time :: integer()
+    last_time :: integer(),
+    log_queue_capacity :: integer(),
+    timeout :: integer()
 }).
 
 %% ------------------------------------------------------------------
@@ -60,11 +62,14 @@ init(_Args) ->
                 log_id = 0,
                 max_log_id = log_queue_capacity() - 1,
                 dropped = 0,
-                last_time = os:timestamp()},
+                last_time = os:timestamp(),
+                log_queue_capacity = log_queue_capacity(),
+                timeout = timeout()
+            },
     {ok, State}.
 
-handle_call({put, StringFormat, Args, Metadata}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen, log_id=LogId, dropped=Dropped}) ->
-    State2 = case LogQueueLen < log_queue_capacity() of
+handle_call({put, StringFormat, Args, Metadata}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen, log_id=LogId, dropped=Dropped, log_queue_capacity = LogQueueCapacity, timeout = Timeout}) ->
+    State2 = case LogQueueLen < LogQueueCapacity of
         true ->
             LogQueue2 = queue:in({LogId, StringFormat, Args, Metadata}, LogQueue),
             LogQueueLen2 = LogQueueLen + 1,
@@ -78,15 +83,15 @@ handle_call({put, StringFormat, Args, Metadata}, _From, State = #state{log_queue
     end,
     State3 = handle_dropped(State2),
     send_new_data(State3),
-    {reply, ok, State3, timeout()};
-handle_call({get, _LastLogId}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen, buffer=Buffer})
+    {reply, ok, State3, Timeout};
+handle_call({get, _LastLogId}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen, buffer=Buffer, timeout = Timeout})
     when LogQueueLen > 0 andalso Buffer == undefined ->
     {{value, Log}, LogQueue2} = queue:out(LogQueue),
     LogQueueLen2 = LogQueueLen - 1,
     State2 = State#state{log_queue=LogQueue2, log_queue_len=LogQueueLen2, buffer=Log},
     State3 = handle_dropped(State2),
-    {reply, {LogQueueLen2, Log}, State3, timeout()};
-handle_call({get, LastLogId}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen, buffer=Buffer})
+    {reply, {LogQueueLen2, Log}, State3, Timeout};
+handle_call({get, LastLogId}, _From, State = #state{log_queue=LogQueue, log_queue_len=LogQueueLen, buffer=Buffer, timeout = Timeout})
     when LogQueueLen > 0 ->
     {BufferLogId, _, _, _} = Buffer,
     {Reply, State2} = case LastLogId =:= BufferLogId of
@@ -98,10 +103,10 @@ handle_call({get, LastLogId}, _From, State = #state{log_queue=LogQueue, log_queu
             {{LogQueueLen, Buffer}, State}
     end,
     State3 = handle_dropped(State2),
-    {reply, Reply, State3, timeout()};
-handle_call({get, _LastLogId}, _From, State) ->
+    {reply, Reply, State3, Timeout};
+handle_call({get, _LastLogId}, _From, #state{timeout = Timeout} = State) ->
     State2 = handle_dropped(State),
-    {reply, undefined, State2, timeout()};
+    {reply, undefined, State2, Timeout};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
