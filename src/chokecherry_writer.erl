@@ -8,7 +8,7 @@
 
 -compile([{parse_transform, lager_transform}]).
 
--record(state, {log_id :: integer(), timeout :: integer()}).
+-record(state, {first_message :: boolean(), timeout :: integer()}).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -36,23 +36,25 @@ start_link() ->
 
 init(_Args) ->
     gen_server:cast(self(), loop),
-    {ok, #state{timeout = config(timeout, ?WRITER_TIMEOUT)}}.
+    {ok, #state{
+            timeout = config(timeout, ?WRITER_TIMEOUT),
+            first_message = true
+         }}.
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
-handle_cast(loop, State = #state{log_id=PreviosLogId, timeout = Timeout}) ->
-    LogId2 = case ?SHAPER:get(PreviosLogId) of
+handle_cast(loop, State = #state{first_message=FirstMessage, timeout = Timeout}) ->
+    case ?SHAPER:get(FirstMessage) of
         undefined ->
-            PreviosLogId;
-        {Len, {LogId, StringFormat, Args, Metadata}} ->
+            nop;
+        {Len, {StringFormat, Args, Metadata}} ->
             lager:log(info, Metadata, StringFormat, Args),
             if Len > 0 -> gen_server:cast(self(), loop);
                 true -> ok
-            end,
-            LogId
+            end
     end,
-    State2 = State#state{log_id=LogId2},
+    State2 = State#state{first_message=false},
     {noreply, State2, Timeout};
 handle_cast(new_data, State) ->
     flush_new_data(),

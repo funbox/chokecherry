@@ -8,13 +8,13 @@ all_test_() ->
         fun chokecherry_shaper_100000_puts_and_100000_gets/1
     ]}.
 
-start() -> 
+start() ->
     application:ensure_all_started(chokecherry),
     timer:sleep(100),
     supervisor:terminate_child(chokecherry_sup, chokecherry_writer),
     ok.
 
-stop(_) -> 
+stop(_) ->
     application:stop(chokecherry).
 
 chokecherry_shaper_100_puts_and_100_gets(_) ->
@@ -32,15 +32,15 @@ chokecherry_shaper_100000_puts_and_100000_gets(_) ->
     L3 = lists:reverse(get_all(undefined, [])),
     ?_assertEqual(L2, L3).
 
-get_all(LogId, Acc) ->
-    case chokecherry_shaper:get(LogId) of
+get_all(FirstMessage, Acc) ->
+    case chokecherry_shaper:get(FirstMessage) of
         undefined ->
             Acc;
-        {_Len, {NewLogId, StringFormat, Args, Metadata}} ->
-            get_all(NewLogId, [[StringFormat, Args, Metadata] | Acc])
+        {_Len, {StringFormat, Args, Metadata}} ->
+            get_all(false, [[StringFormat, Args, Metadata] | Acc])
     end.
 
-pause(LastTimestamp) -> 
+pause(LastTimestamp) ->
     {M, S, _} = Now = os:timestamp(),
     case LastTimestamp of
         {M, S, _} -> pause(Now);
