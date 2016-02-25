@@ -136,7 +136,7 @@ handle_dropped(State = #state{dropped=Dropped, last_time=LastTime}) when Dropped
         {M, S, _} ->
             State#state{dropped=Dropped, last_time=Now};
         _ ->
-            error_logger:error_report(chokecherry, io_lib:format("chokecherry dropped ~p messages in the last second", [Dropped])),
+            error_logger:error_report(io_lib:format("chokecherry dropped ~p messages in the last second", [Dropped])),
             State#state{dropped=0, last_time=Now}
     end;
 handle_dropped(State) -> State#state{last_time=os:timestamp()}.
