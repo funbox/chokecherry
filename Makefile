@@ -1,4 +1,4 @@
-.PHONY: all deps compile compile_without_reba run test clean
+.PHONY: all deps compile compile_without_rebar run test clean
 
 REBAR=./rebar
 
