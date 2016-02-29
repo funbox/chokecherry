@@ -126,10 +126,8 @@ handle_dropped(State = #state{dropped=Dropped, last_time=LastTime}) when Dropped
     end;
 handle_dropped(State) -> State#state{last_time=os:timestamp()}.
 
-send_new_data(LogQueueLen) ->
-    if LogQueueLen =:= 1 -> gen_server:cast(?WRITER, new_data);
-       true -> nop
-    end.
+send_new_data(0) -> gen_server:cast(?WRITER, new_data);
+send_new_data(_) -> nop.
 
 log_queue_capacity() ->
     config(log_queue_capacity, ?SHAPER_LOG_QUEUE_CAPACITY).
