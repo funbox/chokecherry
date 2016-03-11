@@ -1,13 +1,14 @@
 -module(chokecherry_writer).
 -behaviour(gen_server).
--define(SERVER, ?MODULE).
 
--define(TIMEOUT, 200).
+-include("chokecherry.hrl").
+
+-define(SERVER, ?MODULE).
 -define(SHAPER, chokecherry_shaper).
 
 -compile([{parse_transform, lager_transform}]).
 
--record(state, {log_id :: integer()}).
+-record(state, {first_message :: boolean(), timeout :: integer()}).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -35,24 +36,26 @@ start_link() ->
 
 init(_Args) ->
     gen_server:cast(self(), loop),
-    {ok, #state{}}.
+    {ok, #state{
+            timeout = config(timeout, ?WRITER_TIMEOUT),
+            first_message = true
+         }}.
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
-handle_cast(loop, State = #state{log_id=PreviosLogId}) ->
-    LogId2 = case ?SHAPER:get(PreviosLogId) of
-        undefined -> 
-            PreviosLogId;
-        {Len, {LogId, StringFormat, Args}} -> 
-            lager:info(StringFormat, Args),
+handle_cast(loop, State = #state{first_message=FirstMessage, timeout = Timeout}) ->
+    case ?SHAPER:get(FirstMessage) of
+        undefined ->
+            nop;
+        {Len, {StringFormat, Args, Metadata}} ->
+            lager:log(info, Metadata, StringFormat, Args),
             if Len > 0 -> gen_server:cast(self(), loop);
                 true -> ok
-            end,
-            LogId
+            end
     end,
-    State2 = State#state{log_id=LogId2},
-    {noreply, State2, ?TIMEOUT};
+    State2 = State#state{first_message=false},
+    {noreply, State2, Timeout};
 handle_cast(new_data, State) ->
     flush_new_data(),
     gen_server:cast(self(), loop),
@@ -82,3 +85,7 @@ flush_new_data() ->
     after 0 ->
         ok
     end.
+
+config(Key, Default) ->
+    Config = application:get_env(chokecherry, writer, []),
+    proplists:get_value(Key, Config, Default).

@@ -19,12 +19,10 @@ info(StringFormat) ->
 info(Module, StringFormat) when is_atom(Module) ->
     info(Module, StringFormat, []);
 info(StringFormat, Args) ->
-    chokecherry_shaper:put(StringFormat, Args).
+    chokecherry_shaper:put(StringFormat, Args, []).
 
 info(Module, StringFormat, Args) ->
-    chokecherry_shaper:put(
-        io_lib:format("~s:~s ", [atom_to_list(Module), pid_to_list(self())]) ++ StringFormat,
-        Args).
+    chokecherry_shaper:put(StringFormat, Args, [{module, Module}, {pid, self()}]).
 
 warning(StringFormat) ->
     lager:warning(StringFormat).
