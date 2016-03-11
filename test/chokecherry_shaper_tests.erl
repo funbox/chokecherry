@@ -18,7 +18,7 @@ stop(_) ->
     application:stop(chokecherry).
 
 chokecherry_shaper_100_puts_and_100_gets(_) ->
-    L1 = [["log ~p", X, []] || X <- lists:seq(1, 10)],
+    L1 = [["log ~p", X, []] || X <- lists:seq(1, 100)],
     [chokecherry_shaper:put(S, A, M) || [S, A, M] <- L1],
     L2 = lists:reverse(get_all(undefined, [])),
     ?_assertEqual(L1, L2).
