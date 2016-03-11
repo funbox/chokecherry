@@ -56,3 +56,9 @@
 ].
 
 ```
+
+Статус
+======
+
+[![Build Status](https://travis-ci.org/funbox/chokecherry.svg?branch=master)](https://travis-ci.org/funbox/chokecherry)
+
