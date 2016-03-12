@@ -2,5 +2,5 @@ language: erlang
 otp_release:
 - 18.1
 script:
-- make
-- make test
+- make all test
+
