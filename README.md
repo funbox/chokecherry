@@ -1,25 +1,24 @@
 # Chokecherry
 
-Обертка над **lager**, которая не зависимо от вида **backend** осуществляет ограничение количества выводимых сообщений.
+Wrapper around **lager** logger which limits the volume of messages irrespectively of the lager's **backend**.
 
-Вызовы **chokecherry:info**, **chokecherry:warning**, **chokecherry:error** транслируются в **lager:info**, **lager:warning**,
-**lager:error** соответсвенно с соблюдением арности.
+The calls **chokecherry:info**, **chokecherry:warning**, **chokecherry:error** are getting translated into the **lager:info**, **lager:warning**, **lager:error**, retaining the proper arity.
 
-Для добавления в лог название модуля откуда произошел вызов и Pid вызывающего процесса можно использовать один из двух способов:
+There are two ways to log out the original module's name and the invocation process' Pid:
 
-* указываем опцию для компилятора непосредственно в файле, в котором используем:
+* Use the compiler option right inside the file which uses the **chockecherry**:
 
 ```
 -compile([{parse_transform, chokecherry_transform}]).
 ```
 
-**Внимание**: данная строчка должна предшествовать
+**Important**: that line should precede the
 
 ```
 -compile([{parse_transform, lager_transform}]).
 ```
 
-* указываем опцию для компилятора в главном rebar.config проекта:
+* Use that compiler option in the global `rebar.config` for the project:
 
 ```
 {erl_opts, [
@@ -30,17 +29,16 @@
 }.
 ```
 
-**Внимание**: *chokecherry_transform* должен предшествовать *lager_transform*.
+**Important**: the *chokecherry_transform* should precede the *lager_transform*.
 
-Конфигурация
-============
+## Configuration
 
-Данное приложение можно немного подстроить под свои нужды, а именно переопределить следующие значения:
+This application can be somewhat customized by redefining the following settings:
 
-- длина очереди для **shaper**
-- таймауты для **shaper** и **writer**
+- the queue length for the **shaper**
+- timeouts for the **shaper** and **writer**
 
-Значения по-умолчанию следующие:
+Default settings are as follows:
 
 ```
 [
@@ -57,8 +55,7 @@
 
 ```
 
-Статус сборки
-=============
+## Build status
 
 [![Build Status](https://travis-ci.org/funbox/chokecherry.svg?branch=master)](https://travis-ci.org/funbox/chokecherry)
 
