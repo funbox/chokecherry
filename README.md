@@ -57,7 +57,16 @@ Default settings are as follows:
 
 ```
 
-## Build status
+## How it works
 
-[![Build Status](https://travis-ci.org/funbox/chokecherry.svg?branch=master)](https://travis-ci.org/funbox/chokecherry)
+```
++------------+     +------------+     +------------+     +------------+
+|            |     |            |     |            |     |            |
+|    app     +----->   shaper   +----->   writer   +----->   lager    |
+|            |     |            |     |            |     |            |
++------------+     +------------+     +------------+     +------------+
+```
 
+**shaper** accumulates incoming messages in the queue. If the queue size exceeds *log_queue_capacity* within a certain time period (1 second), it sends an *error_report* "chokecherry dropped N messages in the last second", and drops messages from the end of the queue, while receiving new ones and maintaining the maximum size of the queue.
+
+**writer** pulls messages from **shaper** and transmits them to **lager**.
