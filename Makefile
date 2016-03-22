@@ -1,4 +1,5 @@
 .PHONY: all deps compile compile_without_rebar run test clean
+.PHONY: docker_build docker_shell
 
 REBAR=./rebar
 
@@ -21,3 +22,9 @@ run:
 
 test:
 	@$(REBAR) eunit skip_deps=true
+
+docker_build:
+		docker build -t chokecherry .
+
+docker_shell:
+		docker run -it --rm -v "$(CURDIR)":/mylib -w /mylib chokecherry /bin/bash
