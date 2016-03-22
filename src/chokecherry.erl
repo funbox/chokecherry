@@ -33,9 +33,7 @@ warning(StringFormat, Args) ->
     lager:warning(StringFormat, Args).
 
 warning(Module, StringFormat, Args) ->
-    lager:warning(
-        io_lib:format("~s:~s ", [atom_to_list(Module), pid_to_list(self())]) ++ StringFormat,
-        Args).
+    lager:log(warning, [{module, Module}, {pid, self()}], StringFormat, Args).
 
 error(StringFormat) ->
     lager:error(StringFormat).
@@ -46,6 +44,4 @@ error(StringFormat, Args) ->
     lager:error(StringFormat, Args).
 
 error(Module, StringFormat, Args) ->
-    lager:error(
-        io_lib:format("~s:~s ", [atom_to_list(Module), pid_to_list(self())]) ++ StringFormat,
-        Args).
+    lager:log(error, [{module, Module}, {pid, self()}], StringFormat, Args).
