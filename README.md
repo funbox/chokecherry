@@ -1,6 +1,8 @@
 # Chokecherry
 
-Wrapper around **lager** logger which limits the volume of messages irrespectively of the lager's **backend**.
+[![Build Status](https://travis-ci.org/funbox/chokecherry.svg?branch=master)](https://travis-ci.org/funbox/chokecherry)
+
+Wrapper around **lager** logger which limits the volume of **info** messages irrespectively of the lager's **backend**.
 
 The calls **chokecherry:info**, **chokecherry:warning**, **chokecherry:error** are getting translated into the **lager:info**, **lager:warning**, **lager:error**, retaining the proper arity.
 
