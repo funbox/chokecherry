@@ -2,72 +2,58 @@
 
 -behaviour(gen_server).
 
--include("chokecherry.hrl").
-
--define(SERVER, ?MODULE).
--define(SHAPER, chokecherry_shaper).
-
--record(state, {
-    first_message           :: boolean(),
-    timeout                 :: non_neg_integer()
-}).
-
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
 
 -export([start_link/0]).
 
+-export([poll/0]).
+
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
 %% ------------------------------------------------------------------
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+-export([init/1,
+         handle_call/3,
+         handle_cast/2,
+         handle_info/2,
+         terminate/2,
+         code_change/3]).
+
+-include("chokecherry.hrl").
+
+-record(state, {
+}).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+-spec poll() -> 'ok'.
+poll() ->
+    gen_server:cast(?MODULE, poll).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
 init(_Args) ->
-    gen_server:cast(self(), loop),
-    {ok, #state{
-            timeout         = chokecherry_config:writer_timeout(),
-            first_message   = true
-    }}.
+    {ok, #state{}}.
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
-handle_cast(loop, State = #state{first_message=FirstMessage, timeout = Timeout}) ->
-    case ?SHAPER:get(FirstMessage) of
-        undefined ->
-            nop;
-        {Len, {StringFormat, Args, Metadata}} ->
-            lager:log(info, Metadata, StringFormat, Args),
-            if Len > 0 -> gen_server:cast(self(), loop);
-                true -> ok
-            end
-    end,
-    State2 = State#state{first_message=false},
-    {noreply, State2, Timeout};
-handle_cast(new_data, State) ->
-    flush_new_data(),
-    gen_server:cast(self(), loop),
+handle_cast(poll, State) ->
+    ok = poll(fun chokecherry_shaper:get/0),
     {noreply, State};
+
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(timeout, State) ->
-    gen_server:cast(self(), loop),
-    {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -81,10 +67,15 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-flush_new_data() ->
-    receive
-        {_, new_data} -> flush_new_data()
-    after 0 ->
-        ok
-    end.
+-spec poll(fun(() -> 'ok' | {term(), term(), term()})) -> 'ok'.
+poll(F) ->
+    poll(F, F()).
+
+-spec poll(fun(() -> 'ok' | {term(), term(), term()}), 'ok' | {term(), term(), term()}) -> 'ok'.
+poll(F, ok) ->
+    ok;
+
+poll(F, {StringFormat, Args, Metadata}) ->
+    lager:log(info, Metadata, StringFormat, Args),
+    poll(F, F()).
 

@@ -33,10 +33,10 @@ chokecherry_shaper_100000_puts_and_100000_gets(_) ->
     ?_assertEqual(L2, L3).
 
 get_all(FirstMessage, Acc) ->
-    case chokecherry_shaper:get(FirstMessage) of
-        undefined ->
+    case chokecherry_shaper:get() of
+        ok ->
             Acc;
-        {_Len, {StringFormat, Args, Metadata}} ->
+        {StringFormat, Args, Metadata} ->
             get_all(false, [[StringFormat, Args, Metadata] | Acc])
     end.
 
