@@ -1,25 +1,26 @@
 # Chokecherry
 
-Обертка над **lager**, которая не зависимо от вида **backend** осуществляет ограничение количества выводимых сообщений.
+[![Build Status](https://travis-ci.org/funbox/chokecherry.svg?branch=master)](https://travis-ci.org/funbox/chokecherry)
 
-Вызовы **chokecherry:info**, **chokecherry:warning**, **chokecherry:error** транслируются в **lager:info**, **lager:warning**,
-**lager:error** соответсвенно с соблюдением арности.
+Wrapper around **lager** logger which limits the volume of **info** messages irrespectively of the lager's **backend**.
 
-Для добавления в лог название модуля откуда произошел вызов и Pid вызывающего процесса можно использовать один из двух способов:
+The calls **chokecherry:info**, **chokecherry:warning**, **chokecherry:error** are getting translated into the **lager:info**, **lager:warning**, **lager:error**, retaining the proper arity.
 
-* указываем опцию для компилятора непосредственно в файле, в котором используем:
+There are two ways to log out the original module's name and the invocation process' Pid:
+
+* Use the compiler option right inside the file which uses the **chockecherry**:
 
 ```
 -compile([{parse_transform, chokecherry_transform}]).
 ```
 
-**Внимание**: данная строчка должна предшествовать
+**Important**: that line should precede the
 
 ```
 -compile([{parse_transform, lager_transform}]).
 ```
 
-* указываем опцию для компилятора в главном rebar.config проекта:
+* Use that compiler option in the global `rebar.config` for the project:
 
 ```
 {erl_opts, [
@@ -30,17 +31,16 @@
 }.
 ```
 
-**Внимание**: *chokecherry_transform* должен предшествовать *lager_transform*.
+**Important**: the *chokecherry_transform* should precede the *lager_transform*.
 
-Конфигурация
-============
+## Configuration
 
-Данное приложение можно немного подстроить под свои нужды, а именно переопределить следующие значения:
+This application can be somewhat customized by redefining the following settings:
 
-- длина очереди для **shaper**
-- таймауты для **shaper** и **writer**
+- the queue length for the **shaper**
+- timeouts for the **shaper** and **writer**
 
-Значения по-умолчанию следующие:
+Default settings are as follows:
 
 ```
 [
@@ -56,3 +56,17 @@
 ].
 
 ```
+
+## How it works
+
+```
++------------+     +------------+     +------------+     +------------+
+|            |     |            |     |            |     |            |
+|    app     +----->   shaper   +----->   writer   +----->   lager    |
+|            |     |            |     |            |     |            |
++------------+     +------------+     +------------+     +------------+
+```
+
+**shaper** accumulates incoming messages in the queue. If the queue size exceeds *log_queue_capacity* within a certain time period (1 second), it sends an *error_report* "chokecherry dropped N messages in the last second", and drops messages from the end of the queue, while receiving new ones and maintaining the maximum size of the queue.
+
+**writer** pulls messages from **shaper** and transmits them to **lager**.

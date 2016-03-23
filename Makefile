@@ -1,23 +1,25 @@
-.PHONY: all deps compile compile_without_rebar run test clean
+.PHONY: all compile run test clean
+.PHONY: docker_build docker_shell
 
-REBAR=./rebar
+REBAR=./rebar3
 
-all: deps compile
-
-deps:
-	@$(REBAR) get-deps
+all: compile
 
 compile:
-	@$(REBAR) compile
-
-compile_without_rebar:
-	for f in `ls src/*`; do erlc -pa ../lager/ebin/ -o ebin $$f; done
+		@$(REBAR) compile
 
 clean:
-	rm -rf ebin/* log deps
+		@$(REBAR) clean
+		rm -rf log
 
 run:
-	erl -pa ./ebin -pa deps/*/ebin -boot start_sasl -config sys.config -s sync -s lager -s chokecherry
+		erl -pa ./_build/default/lib/*/ebin -boot start_sasl -config sys.config -s sync -s lager -s chokecherry
 
 test:
-	@$(REBAR) eunit skip_deps=true
+		@$(REBAR) eunit skip_deps=true
+
+docker_build:
+		docker build -t chokecherry .
+
+docker_shell:
+		docker run -it --rm -v "$(CURDIR)":/mylib -w /mylib chokecherry /bin/bash
