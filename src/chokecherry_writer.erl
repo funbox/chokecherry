@@ -1,4 +1,5 @@
 -module(chokecherry_writer).
+
 -behaviour(gen_server).
 
 -include("chokecherry.hrl").
@@ -6,9 +7,10 @@
 -define(SERVER, ?MODULE).
 -define(SHAPER, chokecherry_shaper).
 
--compile([{parse_transform, lager_transform}]).
-
--record(state, {first_message :: boolean(), timeout :: integer()}).
+-record(state, {
+    first_message           :: boolean(),
+    timeout                 :: non_neg_integer()
+}).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -37,9 +39,9 @@ start_link() ->
 init(_Args) ->
     gen_server:cast(self(), loop),
     {ok, #state{
-            timeout = config(timeout, ?WRITER_TIMEOUT),
-            first_message = true
-         }}.
+            timeout         = chokecherry_config:writer_timeout(),
+            first_message   = true
+    }}.
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
@@ -86,6 +88,3 @@ flush_new_data() ->
         ok
     end.
 
-config(Key, Default) ->
-    Config = application:get_env(chokecherry, writer, []),
-    proplists:get_value(Key, Config, Default).

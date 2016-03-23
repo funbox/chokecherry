@@ -1,4 +1,5 @@
 -module(chokecherry_shaper).
+
 -behaviour(gen_server).
 
 -include("chokecherry.hrl").
@@ -7,13 +8,16 @@
 -define(WRITER, chokecherry_writer).
 
 -record(state, {
-    log_queue :: queue:queue(),
-    log_queue_len :: integer(),
-    buffer :: {integer(), list(), list()},
-    dropped :: integer(),
-    last_time :: integer(),
-    log_queue_capacity :: integer(),
-    timeout :: integer()
+    log_queue               :: queue:queue(),
+    log_queue_len           :: non_neg_integer(),
+    log_queue_capacity      :: non_neg_integer(),
+
+    dropped                 :: non_neg_integer(),
+
+    buffer                  :: {non_neg_integer(), list(), list()},
+
+    last_time               :: non_neg_integer(),
+    timeout                 :: non_neg_integer()
 }).
 
 %% ------------------------------------------------------------------
@@ -52,15 +56,18 @@ put(StringFormat, Args, Metadata) ->
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init(_Args) ->
+init([]) ->
     State = #state{
-                log_queue = queue:new(),
-                log_queue_len = 0,
-                buffer = undefined,
-                dropped = 0,
-                last_time = os:timestamp(),
-                log_queue_capacity = log_queue_capacity(),
-                timeout = timeout()
+                log_queue           = queue:new(),
+                log_queue_len       = 0,
+                log_queue_capacity  = chokecherry_config:log_queue_capacity(),
+
+                dropped             = 0,
+
+                buffer              = undefined,
+                last_time           = os:timestamp(),
+
+                timeout             = chokecherry_config:shaper_timeout()
             },
     {ok, State}.
 
@@ -93,6 +100,7 @@ handle_call({get, _FirstMessage}, _From, State = #state{log_queue=LogQueue, log_
 handle_call({get, _FirstMessage}, _From, State = #state{timeout=Timeout}) ->
     State2 = handle_dropped(State),
     {reply, undefined, State2, Timeout};
+
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
@@ -128,14 +136,4 @@ handle_dropped(State) -> State#state{last_time=os:timestamp()}.
 
 send_new_data(0) -> gen_server:cast(?WRITER, new_data);
 send_new_data(_) -> nop.
-
-log_queue_capacity() ->
-    config(log_queue_capacity, ?SHAPER_LOG_QUEUE_CAPACITY).
-
-timeout() ->
-    config(timeout, ?SHAPER_TIMEOUT).
-
-config(Key, Default) ->
-    Config = application:get_env(chokecherry, shaper, []),
-    proplists:get_value(Key, Config, Default).
 
