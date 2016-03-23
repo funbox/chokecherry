@@ -18,17 +18,17 @@ stop(_) ->
     application:stop(chokecherry).
 
 chokecherry_shaper_100_puts_and_100_gets(_) ->
-    L1 = [["log ~p", X, []] || X <- lists:seq(1, 100)],
-    [chokecherry_shaper:put(S, A, M) || [S, A, M] <- L1],
+    L1 = [{[], "log ~p", X} || X <- lists:seq(1, 100)],
+    [chokecherry_shaper:put(Log) || Log <- L1],
     L2 = lists:reverse(get_all(undefined, [])),
     ?_assertEqual(L1, L2).
 
 chokecherry_shaper_100000_puts_and_100000_gets(_) ->
-    L1 = [["log ~p", X, []] || X <- lists:seq(1, 100000)],
+    L1 = [{[], "log ~p", X} || X <- lists:seq(1, 100000)],
     pause(os:timestamp()),
-    [chokecherry_shaper:put(S, A, M) || [S, A, M] <- L1],
+    [chokecherry_shaper:put(Log) || Log <- L1],
     timer:sleep(1500),
-    L2 = [["log ~p", X, []] || X <- lists:seq(90001, 100000)],
+    L2 = [{[], "log ~p", X} || X <- lists:seq(90001, 100000)],
     L3 = lists:reverse(get_all(undefined, [])),
     ?_assertEqual(L2, L3).
 
@@ -36,8 +36,8 @@ get_all(FirstMessage, Acc) ->
     case chokecherry_shaper:get() of
         ok ->
             Acc;
-        {StringFormat, Args, Metadata} ->
-            get_all(false, [[StringFormat, Args, Metadata] | Acc])
+        Log ->
+            get_all(false, [Log | Acc])
     end.
 
 pause(LastTimestamp) ->

@@ -1,8 +1,8 @@
 {application, chokecherry,
  [
-  {description, "lager wrapper"},
+  {description, "Erlang logging wrapper over lager"},
   {vsn, "0.2.7"},
-  {registered, [chokecherry_sup, chokecherry_shaper, chokecherry_writer]},
+  {registered, [chokecherry_sup, chokecherry_shaper, chokecherry_shaper_logger, chokecherry_writer, chokecherry_config]},
   {applications, [
                   kernel,
                   stdlib,

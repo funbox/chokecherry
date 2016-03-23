@@ -67,15 +67,15 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
--spec poll(fun(() -> 'ok' | {term(), term(), term()})) -> 'ok'.
+-spec poll(fun(() -> 'ok' | {list(), string(), list()})) -> 'ok'.
 poll(F) ->
     poll(F, F()).
 
--spec poll(fun(() -> 'ok' | {term(), term(), term()}), 'ok' | {term(), term(), term()}) -> 'ok'.
+-spec poll(fun(() -> 'ok' | {list(), string(), list()}), 'ok' | {list(), string(), list()}) -> 'ok'.
 poll(F, ok) ->
     ok;
 
-poll(F, {StringFormat, Args, Metadata}) ->
+poll(F, {Metadata, StringFormat, Args}) ->
     lager:log(info, Metadata, StringFormat, Args),
     poll(F, F()).
 

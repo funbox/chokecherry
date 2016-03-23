@@ -9,7 +9,7 @@
 -export([start_link/0]).
 
 -export([get/0,
-         put/3]).
+         put/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -47,10 +47,10 @@ start_link() ->
 get() ->
     gen_server:call(?MODULE, get).
 
--spec put(term(), term(), term()) -> 'ok' | {'error', 'chokecherry_not_started'}.
-put(StringFormat, Args, Metadata) ->
+-spec put({list(), string(), list()}) -> 'ok' | {'error', 'chokecherry_not_started'}.
+put(Log) ->
     try
-        gen_server:call(?MODULE, {put, {StringFormat, Args, Metadata}})
+        gen_server:call(?MODULE, {put, Log})
     catch
         exit:{noproc, _} -> {error, chokecherry_not_started}
     end.
