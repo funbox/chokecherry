@@ -1,7 +1,7 @@
 {application, chokecherry,
  [
   {description, "lager wrapper"},
-  {vsn, "0.2.6"},
+  {vsn, "0.2.7"},
   {registered, [chokecherry_sup, chokecherry_shaper, chokecherry_writer]},
   {applications, [
                   kernel,
