@@ -48,9 +48,6 @@ Default settings are as follows:
         {shaper, [
             {timeout, 1000},
             {log_queue_capacity, 10000}
-        ]},
-        {writer, [
-            {timeout, 200}
         ]}
     ]}
 ].

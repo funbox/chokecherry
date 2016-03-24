@@ -40,7 +40,7 @@ info(Module, StringFormat) when is_atom(Module) ->
     info(Module, StringFormat, []);
 
 info(StringFormat, Args) ->
-    chokecherry_shaper:put(StringFormat, Args, []).
+    chokecherry_shaper:put({[], StringFormat, Args}).
 
 -spec info(atom(), string(), list()) -> 'ok'.
 info(Module, StringFormat, Args) ->

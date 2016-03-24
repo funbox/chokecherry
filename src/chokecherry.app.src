@@ -1,6 +1,6 @@
 {application, chokecherry,
  [
-  {description, "Erlang logging wrapper over lager"},
+  {description, "Erlang logging wrapper around lager"},
   {vsn, "0.2.7"},
   {registered, [chokecherry_sup, chokecherry_shaper, chokecherry_shaper_logger, chokecherry_writer, chokecherry_config]},
   {applications, [
