@@ -38,7 +38,7 @@ There are two ways to log out the original module's name and the invocation proc
 This application can be somewhat customized by redefining the following settings:
 
 - the queue length for the **shaper**
-- timeouts for the **shaper** and **writer**
+- timeout for the **shaper**
 
 Default settings are as follows:
 
@@ -48,9 +48,6 @@ Default settings are as follows:
         {shaper, [
             {timeout, 1000},
             {log_queue_capacity, 10000}
-        ]},
-        {writer, [
-            {timeout, 200}
         ]}
     ]}
 ].
@@ -70,3 +67,15 @@ Default settings are as follows:
 **shaper** accumulates incoming messages in the queue. If the queue size exceeds *log_queue_capacity* within a certain time period (1 second), it sends an *error_report* "chokecherry dropped N messages in the last second", and drops messages from the end of the queue, while receiving new ones and maintaining the maximum size of the queue.
 
 **writer** pulls messages from **shaper** and transmits them to **lager**.
+
+
+## Changelog
+
+### 0.2.8
+
+1. Simplify logic in chokecherry_shaper and chokecherry_writer.
+2. Configuration parameter ```{writer, [{timeout, 200}]``` doesn't need anymore.
+
+### 0.2.7
+
+1. Added chokecherry_shaper_logger shaped messages gen_event manager.
