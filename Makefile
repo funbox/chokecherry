@@ -20,7 +20,6 @@ clean:
 				rm -rf ./log
 				rm -rf ./logs
 				rm -rf ./test/*.beam
-				rm -rf ./test/TEST*.xml
 				rm -rf ./erl_crash.dump
 
 docker_build:
