@@ -10,6 +10,7 @@
 -export([info/1,
          info/2,
          info/3,
+         info/4, 
          warning/1,
          warning/2,
          warning/3,
@@ -45,6 +46,10 @@ info(StringFormat, Args) ->
 -spec info(atom(), string(), list()) -> 'ok'.
 info(Module, StringFormat, Args) ->
     chokecherry_shaper:put({[{module, Module}, {pid, self()}], StringFormat, Args}).
+
+-spec info(atom(), list(), string(), list()) -> 'ok'.
+info(Module, MetaData, StringFormat, Args) ->
+    chokecherry_shaper:put({[{module, Module}, {pid, self()}, MetaData], StringFormat, Args}).
 
 
 -spec warning(string()) -> 'ok'.
