@@ -48,8 +48,14 @@ info(Module, StringFormat, Args) ->
     chokecherry_shaper:put({[{module, Module}, {pid, self()}], StringFormat, Args}).
 
 -spec info(atom(), list(), string(), list()) -> 'ok'.
-info(Module, [MetaData], StringFormat, Args) ->
-    chokecherry_shaper:put({[{module, Module}, {pid, self()}, MetaData], StringFormat, Args}).
+info(Module, MetaData, StringFormat, Args) ->
+    Meta = case MetaData of
+        [] -> [{module, Module}, {pid, self()}];
+        [Element|[]] -> [{module, Module}, {pid, self()}, Element];
+        EList when is_list(EList) -> [{module, Module}, {pid, self()}] ++ EList;
+        Else -> [{module, Module}, {pid, self()}, Else]
+    end,
+    chokecherry_shaper:put({Meta, StringFormat, Args}).
 
 
 -spec warning(string()) -> 'ok'.
