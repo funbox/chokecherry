@@ -48,7 +48,7 @@ info(Module, StringFormat, Args) ->
     chokecherry_shaper:put({[{module, Module}, {pid, self()}], StringFormat, Args}).
 
 -spec info(atom(), list(), string(), list()) -> 'ok'.
-info(Module, MetaData, StringFormat, Args) ->
+info(Module, [MetaData], StringFormat, Args) ->
     chokecherry_shaper:put({[{module, Module}, {pid, self()}, MetaData], StringFormat, Args}).
 
 
